@@ -1,0 +1,34 @@
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c: In function 'main':
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c:13:15: warning: implicit declaration of function 'sbrk' [-Wimplicit-function-declaration]
+   void *ptr = sbrk(0);
+               ^~~~
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c:13:15: warning: initialization of 'void *' from 'int' makes pointer from integer without a cast [-Wint-conversion]
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c: In function 'ff_malloc':
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c:30:10: error: 'blk_ptr' undeclared (first use in this function); did you mean 'blk_t'?
+   return blk_ptr + BLKHD_SIZE;
+          ^~~~~~~
+          blk_t
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c:30:10: note: each undeclared identifier is reported only once for each function it appears in
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c: In function 'grow_heap':
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c:34:21: warning: initialization of 'blk_t *' {aka 'struct _blk_t *'} from 'int' makes pointer from integer without a cast [-Wint-conversion]
+   blk_t * new_blk = sbrk(0);
+                     ^~~~
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c:35:18: warning: initialization of 'void *' from 'int' makes pointer from integer without a cast [-Wint-conversion]
+   void * alloc = sbrk(inc_size + BLKHD_SIZE);
+                  ^~~~
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c:36:3: error: 'assert' undeclared (first use in this function)
+   assert
+   ^~~~~~
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c:36:3: note: 'assert' is defined in header '<assert.h>'; did you forget to '#include <assert.h>'?
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c:6:1:
++#include <assert.h>
+ 
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c:36:3:
+   assert
+   ^~~~~~
+C:\Users\prats\OneDrive\Desktop\Duke 1-2\ECE 650 Systems Programming\Homeworks\Homework-1\my_malloc.c:36:9: error: expected ';' before '}' token
+   assert
+         ^
+         ;
+ }
+ ~        
