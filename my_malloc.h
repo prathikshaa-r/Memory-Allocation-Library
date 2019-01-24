@@ -13,7 +13,10 @@ struct _blk_t {
   struct _blk_t * prev;
 } typedef blk_t;
 
+// todo: check correctness of casting & pointer arithmetic below
 #define BLKHD_SIZE sizeof(blk_t)
+#define BLK_P(us_p) ((blk_t)((void *)us_p + BLKHD_SIZE))
+#define US_P(blk_p) ((void *)blk_p - BLKHD_SIZE)
 
 // First fit malloc/free
 void * ff_malloc(size_t size);
@@ -25,3 +28,6 @@ void bf_free(void * ptr);
 
 unsigned long get_data_segment_size(); // in bytes
 unsigned long get_data_segment_free_space_size(); // in bytes
+
+// Inserts a freed block back into the LinkedList
+void insert_free(blk_t * blk_ptr);
