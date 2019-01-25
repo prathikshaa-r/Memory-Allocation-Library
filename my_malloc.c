@@ -5,13 +5,27 @@
 #include "my_malloc.h"
 
 static blk_t * head = NULL;
-static size_t heap_start = 0;
+static void * heap_start = 0;
 static size_t total_metadata = 0;
 static blk_t * tail = NULL;
 
 int main(void) {
   void *ptr = sbrk(0);
   printf("Program Break: %p\n", ptr);
+}
+
+unsigned long get_data_segment_size(){
+  return sbrk(0) - heap_start;
+}
+
+unsigned long get_data_segment_free_space_size(){
+  blk_t curr = head;
+  size_t free_space = 0;
+  while (curr != NULL) {
+    free_space += curr->size + BLKHD_SIZE;
+    curr = curr->next;
+  }
+  return free_space;
 }
 
 void * ff_malloc(size_t size) { // input - bytes
