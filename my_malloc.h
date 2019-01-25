@@ -31,3 +31,11 @@ unsigned long get_data_segment_free_space_size(); // in bytes
 
 // Inserts a freed block back into the LinkedList
 void insert_free(blk_t * blk_ptr);
+
+// search for block ff and bf allocation policies
+blk_t * ff_search(size_t size); // Searches for first usable block
+blk_t * bf_search(size_t size); // searches for best fit block to allocate - min diff b/w sizes
+
+// function takes blk_t pointer and size of bock to malloc and splits if there
+// is more space
+void spilt(blk_t * start_ptr, size_t size);

@@ -30,6 +30,63 @@ void * ff_malloc(size_t size) { // input - bytes
   return blk_ptr + BLKHD_SIZE;
 }
 
+blk_t * ff_search(size_t size) {
+  blk_t * curr = head;
+  while(curr != NULL){
+    // ff block found
+    if(curr->size >= size){
+      split(curr, size);
+      return curr;
+    }
+    curr = curr->next;
+  }
+  // ff block not found
+  return curr; // NULL when not found
+}
+
+blk_t * bf_search(size_t size) {
+  blk_t * bf_blk = NULL;
+  size_t diff = 0;
+  blk_t * curr = head;
+  while (curr != NULL) {
+    if (curr->size < size) {
+      curr = curr->next;
+      continue;
+    }
+    // same size bock found - break
+    if(curr->size == size){
+      return curr;
+    }
+    // every fitting block
+    if (curr->size > size) {
+      size_t temp_diff = curr->size - size;
+      if((temp_diff < diff) || (bf_blk == NULL)){
+        if (bf_blk == NULL) {assert(diff == 0;)}
+        diff = temp_diff;
+        bf_blk = curr;
+      }
+    }
+    curr = curr->next;
+  } // end of while
+  // if block found, split
+  split(bf_blk, size); // todo check if split needs pointer ref
+  return bf_blk;
+}
+
+// receives pointer of memory to be malloced
+// if there is extra space, splits the block and adds a free block back to LL
+void spilt(blk_t * start_ptr, size_t size) {
+  if (blk_ptr == NULL) || (start_ptr->size <= size + 2*BLKHD_SIZE){
+    return;
+  }
+    blk_t split_ptr = (void *)start + BLKHD_SIZE + size;
+    split_ptr->next = NULL
+    split_ptr->prev = NULL
+    split_ptr->size = start_ptr->size - size;
+    start_ptr->size = size;
+    insert_free(split_ptr);
+}
+
 void * grow_heap(blk_t * prev, size_t inc_size){
   blk_t * new_blk = sbrk(0);
   void * alloc = sbrk(inc_size + BLKHD_SIZE);
@@ -64,8 +121,8 @@ void insert_free(blk_t * blk_ptr) {
       // bloak at end of free list
         if (curr->next = NULL) {
           curr->next = blk_ptr;
-          // blk_ptr->next = NULL;
           blk_ptr->prev = curr;
+          assert(blk_ptr->next == NULL);
           tail = blk_ptr;
         }
       // block in the middle of free list
