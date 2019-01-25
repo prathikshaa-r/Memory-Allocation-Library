@@ -15,7 +15,7 @@ struct _blk_t {
 
 // todo: check correctness of casting & pointer arithmetic below
 #define BLKHD_SIZE sizeof(blk_t)
-#define BLK_P(us_p) ((blk_t)((void *)us_p - BLKHD_SIZE))
+#define BLK_P(us_p) ((blk_t *)((void *)us_p - BLKHD_SIZE))
 #define US_P(blk_p) ((void *)blk_p + BLKHD_SIZE)
 
 /* Required Funcitons */
@@ -40,7 +40,7 @@ void remove_free(blk_t * blk_ptr);
 /* common malloc function which takes the allocaton
  policy as input  and uses the appropriate
 block search function */
-void * malloc(size_t size, int ff);
+void * my_malloc(size_t size, int ff);
 blk_t * getmem(size_t size);
 
 // search for block ff and bf allocation policies
@@ -52,5 +52,5 @@ blk_t * bf_search(size_t size); // searches for best fit block to allocate - min
 split does not remove the block at start_ptr from
 free list
  */
-void spilt(blk_t * start_ptr, size_t size);
+void split(blk_t * start_ptr, size_t size);
 void merge(blk_t * blk_ptr);

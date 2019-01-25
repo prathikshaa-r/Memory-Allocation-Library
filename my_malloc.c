@@ -19,7 +19,7 @@ unsigned long get_data_segment_size(){
 }
 
 unsigned long get_data_segment_free_space_size(){
-  blk_t curr = head;
+  blk_t * curr = head;
   size_t free_space = 0;
   while (curr != NULL) {
     free_space += curr->size + BLKHD_SIZE;
@@ -29,38 +29,40 @@ unsigned long get_data_segment_free_space_size(){
 }
 
 void * ff_malloc(size_t size) { // input - bytes
-  return malloc(size, 1);
+  return my_malloc(size, 1);
 }
 
 void * bf_malloc(size_t size){
-  return malloc(size, 0);
+  return my_malloc(size, 0);
 }
 
-void * malloc(size_t size, int ff){
+void * my_malloc(size_t size, int ff){
+  // ptr malloced for use
+  blk_t * blk_ptr = NULL;
   if (head == NULL) {
     assert(tail == NULL);
     heap_start = sbrk(0);
-    blk_t * blk_ptr = getmem(size);
+    blk_ptr = getmem(size);
   }
   else {
     // search block
     switch (ff) {
       case 0: // bf
-        blk_t * block = bf_search(size);
+        blk_ptr = bf_search(size);
         break;
       case 1: // ff
-        blk_t * block = ff_search(size);
+        blk_ptr = ff_search(size);
         break;
       // todo: default - print error
     }
     // block not found
-    if (block == NULL){
-      blk_t * blk_ptr = getmem(size);
+    if (blk_ptr == NULL){
+      blk_ptr = getmem(size);
     }
     // block found
     else{
       // search functions return block after split
-      remove_free(block);
+      remove_free(blk_ptr);
     }
   }
   return US_P(blk_ptr);
@@ -134,7 +136,7 @@ blk_t * bf_search(size_t size) {
     if (curr->size > size) {
       size_t temp_diff = curr->size - size;
       if((temp_diff < diff) || (bf_blk == NULL)){
-        if (bf_blk == NULL) {assert(diff == 0;)}
+        if (bf_blk == NULL) {assert(diff == 0);}
         diff = temp_diff;
         bf_blk = curr;
       }
@@ -148,13 +150,13 @@ blk_t * bf_search(size_t size) {
 
 // receives pointer of memory to be malloced
 // if there is extra space, splits the block and adds a free block back to LL
-void spilt(blk_t * start_ptr, size_t size) {
-  if (blk_ptr == NULL) || (start_ptr->size <= size + 2*BLKHD_SIZE){
+void split(blk_t * start_ptr, size_t size) {
+  if ((start_ptr == NULL) || (start_ptr->size <= size + 2*BLKHD_SIZE)){
     return;
   }
-    blk_t split_ptr = (void *)start + BLKHD_SIZE + size;
-    split_ptr->next = NULL
-    split_ptr->prev = NULL
+    blk_t * split_ptr = (void *)start_ptr + BLKHD_SIZE + size;
+    split_ptr->next = NULL;
+    split_ptr->prev = NULL;
     split_ptr->size = start_ptr->size - size;
     start_ptr->size = size;
     insert_free(split_ptr);
