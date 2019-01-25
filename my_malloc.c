@@ -15,35 +15,7 @@ int main(void) {
 }
 
 void * ff_malloc(size_t size) { // input - bytes
-  //blk_t * blk_ptr
-  if (head==NULL) {
-    assert(tail == NULL);
-    // heap_start = sbrk(0)
-    // get memory sbrk()
-    // head = sbrk(size + sizeof())
-    // blk_ptr = grow_heap(4*size);
-    // blk_ptr->size = 4*size;
-    // blk_ptr->prev = NULL;
-    // blk_ptr->next = NULL;
-    // head = blk_ptr;
-    // tail = blk_ptr;
-    // split(blk_ptr)
-    blk_t * blk_ptr = getmem(size);
-  }
-  else {
-    // search block
-    blk_t * block = ff_search(size);
-    // block not found
-    if (block == NULL){
-      // call grow_heap(4*size);
-      blk_t * blk_ptr = getmem(size);
-    }
-    // block found
-    else{
-      remove_free(blk_ptr);
-    }
-  }
-  return blk_ptr + BLKHD_SIZE;
+  return malloc(size, 1);
 }
 
 void * bf_malloc(size_t size){
@@ -51,35 +23,50 @@ void * bf_malloc(size_t size){
 }
 
 void * malloc(size_t size, int ff){
-  if (head==NULL) {
+  if (head == NULL) {
     assert(tail == NULL);
+    heap_start = sbrk(0);
     blk_t * blk_ptr = getmem(size);
   }
   else {
     // search block
     switch (ff) {
       case 0: // bf
-        blk_t * block = ff_search(size);
+        blk_t * block = bf_search(size);
         break;
       case 1: // ff
         blk_t * block = ff_search(size);
         break;
+      // todo: default - print error
     }
-
     // block not found
     if (block == NULL){
-      // call grow_heap(4*size);
       blk_t * blk_ptr = getmem(size);
     }
     // block found
     else{
-      remove_free(blk_ptr);
+      // search functions return block after split
+      remove_free(block);
     }
   }
   return US_P(blk_ptr);
 }
 
+blk_t * getmem(size_t size) {
+  blk_t * new_blk = sbrk(4*(BLKHD_SIZE+size));
+  new_blk->size = 4*(BLKHD_SIZE+size) - BLKHD_SIZE;
+  new_blk->next = NULL;
+  new_blk->prev = tail;
+  tail = new_blk;
+  split(new_blk, size);
+  remove_free(new_blk);
+  return new_blk;
+}
+
 void remove_free(blk_t * blk_ptr){
+  if((blk_ptr->next == NULL) && (blk_ptr->prev == NULL)) {
+    return;
+  } // todo: verify if split sets these
   // block at head
   if (head == blk_ptr) {
     assert(blk_ptr->prev == NULL);
@@ -157,12 +144,6 @@ void spilt(blk_t * start_ptr, size_t size) {
     split_ptr->size = start_ptr->size - size;
     start_ptr->size = size;
     insert_free(split_ptr);
-}
-
-void * grow_heap(blk_t * prev, size_t inc_size){
-  blk_t * new_blk = sbrk(0);
-  void * alloc = sbrk(inc_size + BLKHD_SIZE);
-//  assert
 }
 
 // free expexts a valid alloced pointer
@@ -243,7 +224,7 @@ void merge(blk_t * blk_ptr){
   else{
     if (blk_ptr->next == ((void *)US_P(blk_ptr) + blk_ptr->size)) {
       blk_ptr->size = blk_ptr->size + BLKHD_SIZE + blk_ptr->next->size;
-      // todo: update tail if next is tail
+      // done: update tail if next is tail
       if(blk_ptr->next == tail){
         assert(blk_ptr->next->next == NULL);
         tail = blk_ptr;

@@ -41,12 +41,16 @@ void remove_free(blk_t * blk_ptr);
  policy as input  and uses the appropriate
 block search function */
 void * malloc(size_t size, int ff);
+blk_t * getmem(size_t size);
 
 // search for block ff and bf allocation policies
 blk_t * ff_search(size_t size); // Searches for first usable block
 blk_t * bf_search(size_t size); // searches for best fit block to allocate - min diff b/w sizes
 
-// function takes blk_t pointer and size of bock to malloc and splits if there
-// is more space
+/* function takes blk_t pointer and size of bock to malloc and splits if there
+ is more space
+split does not remove the block at start_ptr from
+free list
+ */
 void spilt(blk_t * start_ptr, size_t size);
 void merge(blk_t * blk_ptr);
