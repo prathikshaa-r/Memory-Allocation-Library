@@ -17,18 +17,90 @@ int main(void) {
 void * ff_malloc(size_t size) { // input - bytes
   //blk_t * blk_ptr
   if (head==NULL) {
+    assert(tail == NULL);
     // heap_start = sbrk(0)
     // get memory sbrk()
     // head = sbrk(size + sizeof())
-    // call grow_heap(size)
+    // blk_ptr = grow_heap(4*size);
+    // blk_ptr->size = 4*size;
+    // blk_ptr->prev = NULL;
+    // blk_ptr->next = NULL;
+    // head = blk_ptr;
+    // tail = blk_ptr;
+    // split(blk_ptr)
+    blk_t * blk_ptr = getmem(size);
   }
   else {
     // search block
-    // for loop
-
+    blk_t * block = ff_search(size);
+    // block not found
+    if (block == NULL){
+      // call grow_heap(4*size);
+      blk_t * blk_ptr = getmem(size);
+    }
+    // block found
+    else{
+      remove_free(blk_ptr);
+    }
   }
   return blk_ptr + BLKHD_SIZE;
 }
+
+void * bf_malloc(size_t size){
+  return malloc(size, 0);
+}
+
+void * malloc(size_t size, int ff){
+  if (head==NULL) {
+    assert(tail == NULL);
+    blk_t * blk_ptr = getmem(size);
+  }
+  else {
+    // search block
+    switch (ff) {
+      case 0: // bf
+        blk_t * block = ff_search(size);
+        break;
+      case 1: // ff
+        blk_t * block = ff_search(size);
+        break;
+    }
+
+    // block not found
+    if (block == NULL){
+      // call grow_heap(4*size);
+      blk_t * blk_ptr = getmem(size);
+    }
+    // block found
+    else{
+      remove_free(blk_ptr);
+    }
+  }
+  return US_P(blk_ptr);
+}
+
+void remove_free(blk_t * blk_ptr){
+  // block at head
+  if (head == blk_ptr) {
+    assert(blk_ptr->prev == NULL);
+    head = blk_ptr->next;
+    head->prev = NULL;
+  }
+  // block at tail
+  if (tail == blk_ptr) {
+    assert(blk_ptr->next == NULL);
+    tail = blk_ptr->prev;
+    tail->next = NULL;
+  }
+  // block in the middle
+  else{
+    blk_ptr->prev->next = blk_ptr->next;
+    blk_ptr->next->prev = blk_ptr->prev;
+  }
+  blk_ptr->prev = NULL;
+  blk_ptr->next = NULL;
+}
+
 
 blk_t * ff_search(size_t size) {
   blk_t * curr = head;
@@ -69,7 +141,7 @@ blk_t * bf_search(size_t size) {
     curr = curr->next;
   } // end of while
   // if block found, split
-  split(bf_blk, size); // todo check if split needs pointer ref
+  split(bf_blk, size);
   return bf_blk;
 }
 
@@ -100,7 +172,7 @@ void ff_free(void * us_p) { // get user pointer
 }
 
 void bf_free(void * us_p) {
-  insert_free(BLK_P(us_p)); // onsert freed block into free list
+  insert_free(BLK_P(us_p)); // insert freed block into free list
 }
 
 void insert_free(blk_t * blk_ptr) {
@@ -118,7 +190,7 @@ void insert_free(blk_t * blk_ptr) {
     // store in sorted order of addresses
     while (curr != NULL) {
       if(curr < blk_ptr){
-      // bloak at end of free list
+      // block at end of free list
         if (curr->next = NULL) {
           curr->next = blk_ptr;
           blk_ptr->prev = curr;
@@ -137,8 +209,47 @@ void insert_free(blk_t * blk_ptr) {
             curr = curr->next;
           }
         }
-
       }
+    } // end of while
+  }
+  merge(blk_ptr);
+}
+
+void merge(blk_t * blk_ptr){
+  if (blk_ptr->prev == NULL){
+    assert(blk_ptr == head);
+  }
+  // check adj with prev block
+  else{
+    if (blk_ptr == ((void *)US_P(blk_ptr->prev) + blk_ptr->prev->size)) {
+      blk_ptr->prev->size = blk_ptr->prev->size + BLKHD_SIZE + blk_ptr->size;
+      blk_ptr->prev->next = blk_ptr->next;
+      blk_ptr->next->prev = blk_ptr->prev;
+      blk_ptr->size = 0;
+      if (tail == blk_ptr) {
+        assert(blk_ptr->next == NULL);
+        tail = blk_ptr->prev;
+      }
+      // todo: how to clear info prev, next of middle block
+      blk_ptr = blk_ptr->prev;
+      // todo: update tail if curr is tail
+    }
+  }
+
+  if (blk_ptr->next == NULL) {
+    assert(blk_ptr == tail);
+  }
+  // check with next block
+  else{
+    if (blk_ptr->next == ((void *)US_P(blk_ptr) + blk_ptr->size)) {
+      blk_ptr->size = blk_ptr->size + BLKHD_SIZE + blk_ptr->next->size;
+      // todo: update tail if next is tail
+      if(blk_ptr->next == tail){
+        assert(blk_ptr->next->next == NULL);
+        tail = blk_ptr;
+      }
+      blk_ptr->next = blk_ptr->next->next;
+      blk_ptr->next->prev = blk_ptr;
     }
   }
 }

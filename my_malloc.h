@@ -15,8 +15,10 @@ struct _blk_t {
 
 // todo: check correctness of casting & pointer arithmetic below
 #define BLKHD_SIZE sizeof(blk_t)
-#define BLK_P(us_p) ((blk_t)((void *)us_p + BLKHD_SIZE))
-#define US_P(blk_p) ((void *)blk_p - BLKHD_SIZE)
+#define BLK_P(us_p) ((blk_t)((void *)us_p - BLKHD_SIZE))
+#define US_P(blk_p) ((void *)blk_p + BLKHD_SIZE)
+
+/* Required Funcitons */
 
 // First fit malloc/free
 void * ff_malloc(size_t size);
@@ -29,8 +31,16 @@ void bf_free(void * ptr);
 unsigned long get_data_segment_size(); // in bytes
 unsigned long get_data_segment_free_space_size(); // in bytes
 
+/* Facilitator Functions */
+
 // Inserts a freed block back into the LinkedList
 void insert_free(blk_t * blk_ptr);
+void remove_free(blk_t * blk_ptr);
+
+/* common malloc function which takes the allocaton
+ policy as input  and uses the appropriate
+block search function */
+void * malloc(size_t size, int ff);
 
 // search for block ff and bf allocation policies
 blk_t * ff_search(size_t size); // Searches for first usable block
@@ -39,3 +49,4 @@ blk_t * bf_search(size_t size); // searches for best fit block to allocate - min
 // function takes blk_t pointer and size of bock to malloc and splits if there
 // is more space
 void spilt(blk_t * start_ptr, size_t size);
+void merge(blk_t * blk_ptr);
