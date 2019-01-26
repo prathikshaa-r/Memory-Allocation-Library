@@ -15,8 +15,8 @@ struct _blk_t {
 
 // todo: check correctness of casting & pointer arithmetic below
 #define BLKHD_SIZE sizeof(blk_t)
-#define BLK_P(us_p) ((blk_t *)((void *)us_p - BLKHD_SIZE))
-#define US_P(blk_p) ((void *)blk_p + BLKHD_SIZE)
+#define BLK_P(us_p) ((blk_t *)((char *)us_p - BLKHD_SIZE))
+#define US_P(blk_p) ((char *)blk_p + BLKHD_SIZE)
 
 /* Required Funcitons */
 

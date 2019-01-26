@@ -1,21 +1,37 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
 
 #include "my_malloc.h"
 
 static blk_t * head = NULL;
-static void * heap_start = 0;
-static size_t total_metadata = 0;
+static size_t heap_start = 0;
+// static size_t total_metadata = 0; // not required
 static blk_t * tail = NULL;
 
 int main(void) {
-  void *ptr = sbrk(0);
-  printf("Program Break: %p\n", ptr);
+  // Test 0
+  /* void *ptr = sbrk(0); */
+  /* printf("Program Break: %p\n", ptr); */
+  // Test 1
+  void * a = ff_malloc(10);
+  void * b = ff_malloc(10);
+  void * c = ff_malloc(10);
+  ff_free(a);
+  void * d = ff_malloc(10);
+  assert(a==d);
+  ff_free(b);
+  void * e = ff_malloc(10);
+  assert(b==e);
+  ff_free(c);
+  void * f = ff_malloc(10);
+  assert(c==f);
+  return EXIT_SUCCESS;
 }
 
 unsigned long get_data_segment_size(){
-  return sbrk(0) - heap_start;
+  return (size_t)sbrk(0) - heap_start;
 }
 
 unsigned long get_data_segment_free_space_size(){
@@ -41,7 +57,7 @@ void * my_malloc(size_t size, int ff){
   blk_t * blk_ptr = NULL;
   if (head == NULL) {
     assert(tail == NULL);
-    heap_start = sbrk(0);
+    heap_start = (size_t)sbrk(0);
     blk_ptr = getmem(size);
   }
   else {
@@ -62,7 +78,7 @@ void * my_malloc(size_t size, int ff){
     // block found
     else{
       // search functions return block after split
-      remove_free(blk_ptr);
+      // remove_free(blk_ptr);
     }
   }
   return US_P(blk_ptr);
@@ -70,27 +86,36 @@ void * my_malloc(size_t size, int ff){
 
 blk_t * getmem(size_t size) {
   blk_t * new_blk = sbrk(4*(BLKHD_SIZE+size));
+  if (new_blk == (void *)-1) { return NULL; } // sbrk error handling
   new_blk->size = 4*(BLKHD_SIZE+size) - BLKHD_SIZE;
   new_blk->next = NULL;
   new_blk->prev = tail;
   tail = new_blk;
+  if (head == NULL){
+    head = new_blk;
+  }
   split(new_blk, size);
-  remove_free(new_blk);
+  // remove_free(new_blk);
+  
   return new_blk;
 }
 
 void remove_free(blk_t * blk_ptr){
   if((blk_ptr->next == NULL) && (blk_ptr->prev == NULL)) {
-    return;
+    if (head == tail) {
+      assert(blk_ptr == head);
+      head = NULL;
+      tail = NULL;
+    }
   } // todo: verify if split sets these
   // block at head
-  if (head == blk_ptr) {
+  else if (head == blk_ptr) {
     assert(blk_ptr->prev == NULL);
     head = blk_ptr->next;
     head->prev = NULL;
   }
   // block at tail
-  if (tail == blk_ptr) {
+  else if (tail == blk_ptr) {
     assert(blk_ptr->next == NULL);
     tail = blk_ptr->prev;
     tail->next = NULL;
@@ -152,13 +177,16 @@ blk_t * bf_search(size_t size) {
 // if there is extra space, splits the block and adds a free block back to LL
 void split(blk_t * start_ptr, size_t size) {
   if ((start_ptr == NULL) || (start_ptr->size <= size + 2*BLKHD_SIZE)){
+    remove_free(start_ptr);
     return;
   }
-    blk_t * split_ptr = (void *)start_ptr + BLKHD_SIZE + size;
+    blk_t * split_ptr = (blk_t *)((char *)start_ptr + BLKHD_SIZE + size);
+    
     split_ptr->next = NULL;
     split_ptr->prev = NULL;
-    split_ptr->size = start_ptr->size - size;
+    split_ptr->size = start_ptr->size - size - BLKHD_SIZE;
     start_ptr->size = size;
+    remove_free(start_ptr);
     insert_free(split_ptr);
 }
 
@@ -166,18 +194,30 @@ void split(blk_t * start_ptr, size_t size) {
 // todo: detect? random pointer which is not malloced pointer
 void ff_free(void * us_p) { // get user pointer
   insert_free(BLK_P(us_p)); // insert freed block into free list
+  merge(BLK_P(us_p));
 }
 
 void bf_free(void * us_p) {
   insert_free(BLK_P(us_p)); // insert freed block into free list
+  merge(BLK_P(us_p));
 }
 
 void insert_free(blk_t * blk_ptr) {
-  // block before head
-  if (blk_ptr < head) {
+  // first element
+  if (head == NULL) {
+    assert(tail == NULL);
+    head = blk_ptr;
+    tail = blk_ptr;
+    assert(blk_ptr->next == NULL);
+    assert(blk_ptr->prev == NULL);
+    return;
+  }
+  // edit head
+  else if (blk_ptr < head) {
     head->prev = blk_ptr;
     blk_ptr->next = head;
     head = blk_ptr;
+    return;
   }
   // block after head
   else{
@@ -187,29 +227,32 @@ void insert_free(blk_t * blk_ptr) {
     // store in sorted order of addresses
     while (curr != NULL) {
       if(curr < blk_ptr){
-      // block at end of free list
-        if (curr->next = NULL) {
+      // edit tail
+        if (curr->next == NULL) {
           curr->next = blk_ptr;
           blk_ptr->prev = curr;
           assert(blk_ptr->next == NULL);
           tail = blk_ptr;
+	  // todo:
+	  // curr = curr->next;
+	  return;
         }
-      // block in the middle of free list
-        else {
-          if (curr->next > blk_ptr) {
+	// block in the middle of free list
+        else if (curr->next > blk_ptr) {
             blk_ptr->next = curr->next;
             blk_ptr->prev = curr;
             curr->next->prev = blk_ptr;
             curr->next = blk_ptr;
-          }
-          else {
+	    return;
+        }
+        else {
             curr = curr->next;
-          }
         }
       }
+      // curr = curr->next;
     } // end of while
   }
-  merge(blk_ptr);
+  // merge(blk_ptr);
 }
 
 void merge(blk_t * blk_ptr){
@@ -218,10 +261,12 @@ void merge(blk_t * blk_ptr){
   }
   // check adj with prev block
   else{
-    if (blk_ptr == ((void *)US_P(blk_ptr->prev) + blk_ptr->prev->size)) {
+    if (blk_ptr == (blk_t *)((char *)US_P(blk_ptr->prev) + blk_ptr->prev->size)) {
       blk_ptr->prev->size = blk_ptr->prev->size + BLKHD_SIZE + blk_ptr->size;
       blk_ptr->prev->next = blk_ptr->next;
-      blk_ptr->next->prev = blk_ptr->prev;
+      if(blk_ptr->next != NULL){
+	blk_ptr->next->prev = blk_ptr->prev;
+      }
       blk_ptr->size = 0;
       if (tail == blk_ptr) {
         assert(blk_ptr->next == NULL);
@@ -238,7 +283,7 @@ void merge(blk_t * blk_ptr){
   }
   // check with next block
   else{
-    if (blk_ptr->next == ((void *)US_P(blk_ptr) + blk_ptr->size)) {
+    if (blk_ptr->next == (blk_t *)((char *)US_P(blk_ptr) + blk_ptr->size)) {
       blk_ptr->size = blk_ptr->size + BLKHD_SIZE + blk_ptr->next->size;
       // done: update tail if next is tail
       if(blk_ptr->next == tail){
@@ -246,7 +291,9 @@ void merge(blk_t * blk_ptr){
         tail = blk_ptr;
       }
       blk_ptr->next = blk_ptr->next->next;
-      blk_ptr->next->prev = blk_ptr;
+      if (blk_ptr->next != NULL) {
+	blk_ptr->next->prev = blk_ptr;
+      }
     }
   }
 }
