@@ -40,7 +40,7 @@ void remove_free(blk_t * blk_ptr);
 /* common malloc function which takes the allocaton
  policy as input  and uses the appropriate
 block search function */
-void * my_malloc(size_t size, int ff);
+void * my_malloc(size_t size, int is_ff);
 blk_t * getmem(size_t size);
 
 // search for block ff and bf allocation policies

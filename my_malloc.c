@@ -9,24 +9,43 @@ static blk_t * head = NULL;
 static size_t heap_start = 0;
 // static size_t total_metadata = 0; // not required
 static blk_t * tail = NULL;
+static int is_first_malloc = 1; // to track heap calls from start of program
+
 
 int main(void) {
+
   // Test 0
   /* void *ptr = sbrk(0); */
   /* printf("Program Break: %p\n", ptr); */
+
   // Test 1
-  void * a = ff_malloc(10);
-  void * b = ff_malloc(10);
-  void * c = ff_malloc(10);
-  ff_free(a);
-  void * d = ff_malloc(10);
+  /* void * a = ff_malloc(10); */
+  /* void * b = ff_malloc(10); */
+  /* void * c = ff_malloc(10); */
+  /* ff_free(a); */
+  /* void * d = ff_malloc(10); */
+  /* assert(a==d); */
+  /* ff_free(b); */
+  /* void * e = ff_malloc(10); */
+  /* assert(b==e); */
+  /* ff_free(c); */
+  /* void * f = ff_malloc(10); */
+  /* assert(c==f); */
+
+  // Test 2
+  void * a = bf_malloc(10);
+  void * b = bf_malloc(10);
+  void * c = bf_malloc(10);
+  bf_free(a);
+  void * d = bf_malloc(10);
   assert(a==d);
-  ff_free(b);
-  void * e = ff_malloc(10);
+  bf_free(b);
+  void * e = bf_malloc(10);
   assert(b==e);
-  ff_free(c);
-  void * f = ff_malloc(10);
+  bf_free(c);
+  void * f = bf_malloc(10);
   assert(c==f);
+  
   return EXIT_SUCCESS;
 }
 
@@ -52,17 +71,20 @@ void * bf_malloc(size_t size){
   return my_malloc(size, 0);
 }
 
-void * my_malloc(size_t size, int ff){
+void * my_malloc(size_t size, int is_ff){
   // ptr malloced for use
   blk_t * blk_ptr = NULL;
   if (head == NULL) {
     assert(tail == NULL);
-    heap_start = (size_t)sbrk(0);
+    if(is_first_malloc){
+      heap_start = (size_t)sbrk(0);
+      is_first_malloc = 0;
+    }
     blk_ptr = getmem(size);
   }
   else {
     // search block
-    switch (ff) {
+    switch (is_ff) {
       case 0: // bf
         blk_ptr = bf_search(size);
         break;
@@ -94,8 +116,10 @@ blk_t * getmem(size_t size) {
   if (head == NULL){
     head = new_blk;
   }
+  /* else{ */
+  /*   merge(tail); */
+  /* } */
   split(new_blk, size);
-  // remove_free(new_blk);
   
   return new_blk;
 }
